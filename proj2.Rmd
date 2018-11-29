@@ -1,0 +1,41 @@
+---
+title: "proj2"
+output: html_document
+---
+
+```{r setupdb, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rvest)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+db <- DBI::dbConnect(RSQLite::SQLite(), "C:/Users/Deep/Documents/lahman2016.sqlite")
+```
+## WRANGLING
+1.) There was no missing data in the columns that I chose to represent. Because I natural joined over 3 different data frames, the joins were done on columns that the df's had in common. Because Salaries weren't recorded until 1985, the payroll_df begins with teams having yearId 1985.
+```{sql p1, connection=db, include=TRUE, output.var = "payroll_df"}
+Select franchName, teamID, yearID, SUM(Salary) as Payroll,W, franchID,G, ((1.0 * W/G) * 100) as Win_percentage
+from Salaries natural join Teams natural join TeamsFranchises
+group by teamID, yearID
+```
+
+
+```{r print_result}
+payroll_df %>%
+  filter(yearID < 2015, yearID >1989)
+  mutate(min_year = min(yearID)) %>%
+  mutate(log_yearID = log(yearID - min_year)
+  head()
+```
+
+
+You can also embed plots, for example:
+
+```{r p2, ,echo=TRUE, include=TRUE}
+ggplot(payroll_df, aes(x = yearID, y = Payroll)) + 
+  geom_boxplot()
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
