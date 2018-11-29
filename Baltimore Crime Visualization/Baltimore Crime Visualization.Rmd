@@ -1,0 +1,51 @@
+---
+title: "Interactive Data Maps"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+library(leaflet)
+
+```
+
+##Tidy Data  
+
+```{r Data , include = TRUE}
+
+
+arrest_tab <- read_csv("http://www.hcbravo.org/IntroDataSci/misc/BPD_Arrests.csv")
+dat <- arrest_tab %>% 
+  filter(!is.na(`Location 1`)) %>%
+  separate(`Location 1`, c("lat","lng"), sep=",") %>%
+  mutate(lat=as.numeric(str_replace(lat, "\\(", ""))) %>%
+  mutate(lng=as.numeric(str_replace(lng, "\\)", ""))) %>%
+  sample_n(2000)
+dat
+```
+
+## Map 
+
+In my interactive map I chose to display three different metrics: Number of offenses, distributions of crimes based on sex, and incident offense. The number of offenses was displayed using the markerClusters function. This is a very cool way to represent data in my opinion because you can see how the sampled data( 2000 offenses) is distributed on the map it self. Also the markers for the clusters are colored so the viewer of the map will easily be able to pickout highly concentrated areas of crime. From this metric we are able to see that crime occurs more frequenctly as you get closer to Baltimore( or atleast more crime was recorded closer towards the city rather than outside of the city). The second metric is sex where the blue color is Male and the pink color is female. A very interesting (admittedly unplanned) aspect of the map is if there is a incident involving both a Male and a Female (prostitution, offense where offender is a group of both male and female, etc. ) the colored marked would actually show up as purple because the blue dot and pink dot are transparent enough to blend together. This is accomplished through the fillopacity argument to the addCircleMarkers function. Because of the coloring it was evident that the perpetrator is more likely to be a male than a female. Finally, I included popups that ascertained what the offense of a particular marker was. I made these popups be hover over because otherwise, they would clutter the rest of the data and the map would look too bulky with too many things going on. 
+```{r Map, include = TRUE}
+
+pal <- colorFactor(c("violetred1", "Blue"), dat$sex)
+
+balto_map <- leaflet(dat) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    color = ~pal(sex),
+    stroke = FALSE, fillOpacity = 0.5
+    ,label= ~incidentOffense
+  ) %>%
+  addMarkers(clusterOptions = markerClusterOptions()) %>%
+  addLegend("bottomright", pal = pal, values = ~sex,
+    title = "Sex",
+    opacity = 1) %>%
+  setView(lat=39.29, lng=-76.61, zoom=11)
+balto_map
+
+```
